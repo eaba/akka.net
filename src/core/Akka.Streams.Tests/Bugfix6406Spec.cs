@@ -56,5 +56,32 @@ namespace Akka.Streams.Tests
 
             Assert.Equal(3, result.Count);
         }
+
+        [Fact]
+        public async Task WorkingTest2()
+        {
+            var src = Source.From(Three(new List<int> { 1, 2, 3, 4, 5 }))
+               .Throttle(
+                   cost: 1,
+                   per: TimeSpan.FromSeconds(1),
+                   maximumBurst: 10,
+                   calculateCost: e => e,
+                   mode: ThrottleMode.Shaping)
+               .WithAttributes(new Attributes(new ActorAttributes.SupervisionStrategy(Deciders.ResumingDecider)));
+
+            var result = await src.RunWith(Sink.Seq<int>(), Materializer);
+
+            Assert.Equal(3, result.Count);
+        }
+        private List<int> Three(List<int> s)
+        {
+            var result = new List<int>(); 
+            foreach (var i in s )
+            {
+                if(!(i % 2 == 0))
+                    result.Add(i);  
+            }
+            return result;
+        }
     }
 }
